@@ -5,11 +5,6 @@ const Hero = () => {
   return (
     <section id="home" className="relative bg-gray-900 text-white py-20">
       <div className="absolute inset-0 z-0">
-        <img
-          src="https://imags.unsplash.com/photo-1595859703065-2c794f06b4d3?auto=format&fit=crop&q=80"
-          alt="Film Production"
-          className="w-full h-full object-cover opacity-20"
-        />
       </div>
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">

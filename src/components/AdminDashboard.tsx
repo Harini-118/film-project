@@ -55,6 +55,8 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [form, setForm] = useState<Person>({ image: '', name: '', title: '', bio: '', timestamp: '' });
+  const [formError, setFormError] = useState<string>('');
+  const [imageLoading, setImageLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
   // Load people on mount
@@ -80,10 +82,16 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageLoading(true);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
         setForm({ ...form, image: reader.result as string });
+        setImageLoading(false);
+      };
+      reader.onerror = () => {
+        setFormError('Failed to load image. Please try another file.');
+        setImageLoading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -97,6 +105,16 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   // Save new or edited person
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate required fields
+    if (!form.name.trim() || !form.bio.trim() || !(preview || form.image)) {
+      setFormError('Name, bio, and image are required.');
+      return;
+    }
+    if (imageLoading) {
+      setFormError('Image is still loading. Please wait.');
+      return;
+    }
+    setFormError('');
     if (editIdx !== null) {
       await updatePerson(editIdx, { ...form, image: preview || '', timestamp: form.timestamp });
     } else {
@@ -248,6 +266,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                         </button>
                         <h3 className="text-xl font-bold mb-4 text-center">{editIdx !== null ? 'Edit Person' : 'Add New Person'}</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                          {formError && (
+                            <div className="text-red-500 text-sm text-center mb-2">{formError}</div>
+                          )}
                           <div className="flex flex-col items-center">
                             <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 mb-2">
                               {preview ? (
@@ -262,6 +283,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                               onChange={handleImageChange}
                               className="w-full px-2 py-1 border rounded"
                             />
+                            {imageLoading && (
+                              <div className="text-blue-500 text-xs mt-2">Loading image...</div>
+                            )}
                           </div>
                           <input
                             type="text"
@@ -292,11 +316,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                             <button
                               type="button"
                               className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold"
-                              onClick={() => { setModalOpen(false); setEditIdx(null); setForm({ image: '', name: '', title: '', bio: '', timestamp: '' }); setPreview(null); }}
+                              onClick={() => { setModalOpen(false); setEditIdx(null); setForm({ image: '', name: '', title: '', bio: '', timestamp: '' }); setPreview(null); setFormError(''); setImageLoading(false); }}
                             >Cancel</button>
                             <button
                               type="submit"
-                              className="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700"
+                              className={`px-4 py-2 rounded font-semibold flex items-center gap-2 ${imageLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                              disabled={imageLoading}
                             >Save</button>
                           </div>
                         </form>
